@@ -1,10 +1,20 @@
 from bs4 import BeautifulSoup
 import requests
 import ssl
-import sys, os
+from gateway import Gateway
+# import sys, os
 
 
 ssl.match_hostname = lambda cert, hostname: True
+
+
+def add_in_db(link):
+    gw = Gateway()
+
+    # print("here")
+    if gw.check_if_in_db(link):
+        # print("there")
+        gw.insert_in_db(link)
 
 
 def get_links(start_link):
@@ -32,10 +42,10 @@ def get_links(start_link):
                 pass
             elif link_to_print[0] == "/" or '.bg' not in link_to_print:
                 link_to_print = start_link + link_to_print
-            elif "http" not in link_to_print:
-                print(link_to_print)
-                all_links.append(link_to_print)
-                print("-----------------------------")
+            # elif "http" not in link_to_print:
+            #     print(link_to_print)
+            #     all_links.append(link_to_print)
+            #     print("-----------------------------")
             elif "javascript" in link_to_print:
                 pass
             else:
@@ -47,6 +57,7 @@ def get_links(start_link):
                 else:
                     print(link_to_print)
                     all_links.append(link_to_print)
+                    add_in_db(link_to_print)
                     print("-----------------------------")
     except requests.exceptions.SSLError:
         pass
@@ -60,6 +71,7 @@ def crawler_recurtion(url, visited_links):
         return False
 
     visited_links.append(url)
+    add_in_db(url)
 
     all_links = get_links(url)
     for link in all_links:
