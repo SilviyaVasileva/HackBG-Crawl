@@ -2,14 +2,16 @@ from bs4 import BeautifulSoup
 import requests
 import ssl
 from gateway import Gateway
-# import sys, os
+import sys, os
 
 
 ssl.match_hostname = lambda cert, hostname: True
 
+gw = Gateway()
+
 
 def add_in_db(link):
-    gw = Gateway()
+    # gw = Gateway()
 
     # print("here")
     if gw.check_if_in_db(link):
@@ -71,7 +73,14 @@ def crawler_recurtion(url, visited_links):
         return False
 
     visited_links.append(url)
-    add_in_db(url)
+
+    if not gw.check_if_in_db(url):
+        if gw.is_vivited(url):
+            url = gw.get_link()
+        gw.set_visited(url)
+    else:
+        add_in_db(url)
+        gw.set_visited(url)
 
     all_links = get_links(url)
     for link in all_links:
@@ -79,9 +88,21 @@ def crawler_recurtion(url, visited_links):
             crawler_recurtion(link, visited_links)
 
 
+def parrallel_link(all_links):
+    # gw = Gateway()
+    url_link = gw.get_link()
+    crawler_recurtion(url_link, all_links)
+
+
 def main():
     all_links = []
-    crawler_recurtion("https://register.start.bg", all_links)
+    command = sys.argv[1]
+    if command == "parallel":
+        parrallel_link(all_links)
+    elif command == "commit":
+        gw.db.session.commit()
+    else:
+        crawler_recurtion("https://register.start.bg", all_links)
 
 
 if __name__ == '__main__':
